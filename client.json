@@ -1,6 +1,6 @@
 {
-    "username": "",
-    "password": "",
+    "username": "andrew",
+    "password": "1234",
     "savePassword": true,
     "serverList": [
         "localhost:6317",

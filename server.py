@@ -25,16 +25,8 @@ from src.recipe import Recipe, RecipeManager
 from src.terrain import Terrain
 from src.profession import ProfessionManager, Profession
 from src.monster import MonsterManager
-from src.worldmap import Worldmap
+from src.worldmap import Plane
 from src.passhash import makeSalt
-
-
-class OverMap:  # when the character pulls up the OverMap. a OverMap for each character will have to be stored for undiscovered areas and when they use maps.
-    def __init__(self):  # the ident of the character who owns this overmap.
-        # over map size is the worldmap size
-        # build the overmap from seen tiles, roadmaps, maps.
-        # if a character sees a chunk loaded it's safe to say they 'saw' that overmap tile.
-        return
 
 
 class Server(MastermindServerTCP):
@@ -60,13 +52,13 @@ class Server(MastermindServerTCP):
         self.calendar = Calendar(0, 0, 0, 0, 0, 0)  # all zeros is the epoch
         # self.options.save()
         # create this many chunks in x and y (z is always 1 (level 0) for genning the world. we will build off that for caverns and ant stuff and z level buildings.
-        self.worldmap = Worldmap(13)
+        self.planes = dict()
+        self.planes['Main'] = Plane()
         self.RecipeManager = RecipeManager()
         self.ProfessionManager = ProfessionManager()
         self.MonsterManager = MonsterManager()
-        self.ItemManager = self.worldmap.ItemManager
-        self.FurnitureManager = self.worldmap.FurnitureManager
-
+        self.ItemManager = self.plane.ItemManager
+        
     def get_connections(self):
         return self._mm_connections
 
@@ -95,7 +87,7 @@ class Server(MastermindServerTCP):
             reachable.remove(position)
             explored.append(position)
 
-            new_reachable = self.worldmap.get_adjacent_positions_non_impassable(
+            new_reachable = self.plane.get_adjacent_positions_non_impassable(
                 position
             )
             for adjacent in new_reachable:
@@ -108,7 +100,7 @@ class Server(MastermindServerTCP):
         return None
 
     def find_spawn_point_for_new_character(self):
-        _tiles = self.worldmap.get_all_tiles()
+        _tiles = self.plane.get_all_tiles()
         random.shuffle(_tiles)  # so we all don't spawn in one corner.
         for tile in _tiles:
             if tile["terrain"].impassable:
@@ -124,10 +116,10 @@ class Server(MastermindServerTCP):
         self.characters[ident] = Character(ident)
 
         self.characters[ident].position = self.find_spawn_point_for_new_character()
-        self.worldmap.put_object_at_position(
+        self.plane.put_object_at_position(
             self.characters[ident], self.characters[ident].position
         )
-        self.localmaps[ident] = self.worldmap.get_chunks_near_position(
+        self.localmaps[ident] = self.plane.get_chunks_near_position(
             self.characters[ident].position
         )
 
@@ -203,7 +195,8 @@ class Server(MastermindServerTCP):
                                 )
 
         self._log.info(
-            "New character added to world: {}".format(self.characters[ident].name)
+            "New character added to world: {}".format(
+                self.characters[ident].name)
         )
 
     def callback_client_handle(self, connection_object, data):
@@ -235,7 +228,8 @@ class Server(MastermindServerTCP):
                     with open(str(_path + "SALT")) as f:
                         # send the user their salt.
                         _salt = f.read()
-                        self.callback_client_send(connection_object, str(_salt))
+                        self.callback_client_send(
+                            connection_object, str(_salt))
                 else:
                     print("username doesn't have an account. let's set one up.")
 
@@ -276,7 +270,8 @@ class Server(MastermindServerTCP):
                 with open(str(_path + "HASHED_PASSWORD")) as f:
                     _checkPW = f.read()
                     if _checkPW == _command["args"][0]:
-                        print("password accepted for " + str(_command["ident"]))
+                        print("password accepted for " +
+                              str(_command["ident"]))
                         # get a list of the Character(s) the username 'owns' and send it to them. it's okay to send an empty list.
                         _tmp_list = list()
                         # if there are no characters to add the list remains empty.
@@ -322,7 +317,7 @@ class Server(MastermindServerTCP):
                 )
 
             if _command["command"] == "request_localmap_update":
-                self.localmaps[data["ident"]] = self.worldmap.get_chunks_near_position(
+                self.localmaps[data["ident"]] = self.plane.get_chunks_near_position(
                     self.characters[data["ident"]].position
                 )
                 self.callback_client_send(
@@ -335,15 +330,17 @@ class Server(MastermindServerTCP):
 
             if _command["command"] == "move":
                 self.characters[data["ident"]].command_queue.append(
-                    Action(self.characters[data["ident"]], "move", [data.args[0]])
+                    Action(self.characters[data["ident"]],
+                           "move", [data.args[0]])
                 )
 
             if _command["command"] == "bash":
                 self.characters[data["ident"]].command_queue.append(
-                    Action(self.characters[data["ident"]], "bash", [data.args[0]])
+                    Action(self.characters[data["ident"]],
+                           "bash", [data.args[0]])
                 )
 
-            if _command["command"] == "create_blueprint":  #  [result, direction])
+            if _command["command"] == "create_blueprint":  # [result, direction])
                 # args 0 is ident args 1 is direction.
                 print(
                     "creating blueprint "
@@ -357,7 +354,7 @@ class Server(MastermindServerTCP):
                     )
                 )
                 # blueprint rules
-                # * there should be blueprints for terrain, furniture, items, and anything else that takes a slot up in the Worldmap.
+                # * there should be blueprints for terrain, furniture, items, and anything else that takes a slot up in the Plane.
                 # * they act as placeholders and then 'transform' into the type they are once completed.
                 # Blueprint(type, recipe)
                 position_to_create_at = None
@@ -390,7 +387,7 @@ class Server(MastermindServerTCP):
                 type_of = _recipe["type_of"]
                 bp_to_create = Blueprint(type_of, _recipe)
 
-                self.worldmap.put_object_at_position(
+                self.plane.put_object_at_position(
                     bp_to_create, position_to_create_at
                 )
 
@@ -441,7 +438,8 @@ class Server(MastermindServerTCP):
                             self.characters[data["ident"]], "move", ["south"]
                         )
                     elif _z < _next_z:
-                        action = Action(self.characters[data["ident"]], "move", ["up"])
+                        action = Action(
+                            self.characters[data["ident"]], "move", ["up"])
                     elif _z > _next_z:
                         action = Action(
                             self.characters[data["ident"]], "move", ["down"]
@@ -461,7 +459,7 @@ class Server(MastermindServerTCP):
                 _open_containers = []
                 print(_character, _from_pos, _item_ident)
                 # find the item that the character is requesting.
-                for item in self.worldmap.get_tile_by_position(_from_pos)["items"]:
+                for item in self.plane.get_tile_by_position(_from_pos)["items"]:
                     if item.ident == _item_ident:
                         # this is the item or at least the first one that matches the same ident.
                         _from_item = item  # save a reference to it to use.
@@ -499,13 +497,13 @@ class Server(MastermindServerTCP):
                             "added item correctly. trying to remove it from the world."
                         )
                         # remove it from the world.
-                        for item in self.worldmap.get_tile_by_position(_from_pos)[
+                        for item in self.plane.get_tile_by_position(_from_pos)[
                             "items"
                         ][
                             :
                         ]:  # iterate a copy to remove properly.
                             if item.ident == _item_ident:
-                                self.worldmap.get_tile_by_position(_from_pos)[
+                                self.plane.get_tile_by_position(_from_pos)[
                                     "items"
                                 ].remove(item)
                                 print("removed item from the world successfully.")
@@ -513,7 +511,7 @@ class Server(MastermindServerTCP):
                         return
                     else:
                         print("could not add item to character inventory.")
-                    ### then send the character the updated version of themselves so they can refresh.
+                    # then send the character the updated version of themselves so they can refresh.
 
             if _command["command"] == "move_item":
                 # client sends 'hey server. can you move this item from this to that?'
@@ -548,7 +546,8 @@ class Server(MastermindServerTCP):
                         :
                     ]:  # iterate a copy to remove properly.
                         for item in bodypart.equipped:  # could be a container or not.
-                            if isinstance(item, Container):  # if it's a container.
+                            # if it's a container.
+                            if isinstance(item, Container):
                                 for item2 in item.contained_items[
                                     :
                                 ]:  # check every item in the container.
@@ -559,7 +558,8 @@ class Server(MastermindServerTCP):
                                         print("moved correctly.")
                                         return
                 elif _from_type == "position":
-                    _from_list = self.worldmap.get_tile_by_position(_position)["items"]
+                    _from_list = self.plane.get_tile_by_position(_position)[
+                        "items"]
                     if _item in _from_list:
                         _from_list.remove(_item)
                         _to_list.append(_item)
@@ -568,7 +568,7 @@ class Server(MastermindServerTCP):
                 elif (
                     _from_type == "blueprint"
                 ):  # a blueprint is a type of container but can't be moved from it's world position.
-                    for item in self.worldmap.get_tile_by_position(_position)["items"]:
+                    for item in self.plane.get_tile_by_position(_position)["items"]:
                         if (
                             isinstance(item) == Blueprint
                         ):  # only one blueprint allowed per space.
@@ -604,13 +604,15 @@ class Server(MastermindServerTCP):
 
     def callback_connect_client(self, connection_object):
         self._log.info(
-            "Server: Client from {} connected.".format(connection_object.address)
+            "Server: Client from {} connected.".format(
+                connection_object.address)
         )
         return super(Server, self).callback_connect_client(connection_object)
 
     def callback_disconnect_client(self, connection_object):
         self._log.info(
-            "Server: Client from {} disconnected.".format(connection_object.address)
+            "Server: Client from {} disconnected.".format(
+                connection_object.address)
         )
         return super(Server, self).callback_disconnect_client(connection_object)
 
@@ -632,7 +634,7 @@ class Server(MastermindServerTCP):
             if action.action_type == "move":
                 actions_to_take = actions_to_take - 1  # moving costs 1 ap.
                 if action.args[0] == "south":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -650,7 +652,7 @@ class Server(MastermindServerTCP):
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "north":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -668,7 +670,7 @@ class Server(MastermindServerTCP):
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "east":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -686,7 +688,7 @@ class Server(MastermindServerTCP):
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "west":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -704,7 +706,7 @@ class Server(MastermindServerTCP):
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "up":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -722,7 +724,7 @@ class Server(MastermindServerTCP):
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "down":
-                    if self.worldmap.move_object_from_position_to_position(
+                    if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
@@ -742,7 +744,7 @@ class Server(MastermindServerTCP):
             elif action.action_type == "bash":
                 actions_to_take = actions_to_take - 1  # bashing costs 1 ap.
                 if action.args[0] == "south":
-                    self.worldmap.bash(
+                    self.plane.bash(
                         self.characters[creature.name],
                         Position(
                             self.characters[creature.name].position.x,
@@ -752,14 +754,14 @@ class Server(MastermindServerTCP):
                     )
                     self.localmaps[
                         creature.name
-                    ] = self.worldmap.get_chunks_near_position(
+                    ] = self.plane.get_chunks_near_position(
                         self.characters[creature.name].position
                     )
                     creature.command_queue.remove(
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "north":
-                    self.worldmap.bash(
+                    self.plane.bash(
                         self.characters[creature.name],
                         Position(
                             self.characters[creature.name].position.x,
@@ -769,14 +771,14 @@ class Server(MastermindServerTCP):
                     )
                     self.localmaps[
                         creature.name
-                    ] = self.worldmap.get_chunks_near_position(
+                    ] = self.plane.get_chunks_near_position(
                         self.characters[creature.name].position
                     )
                     creature.command_queue.remove(
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "east":
-                    self.worldmap.bash(
+                    self.plane.bash(
                         self.characters[creature.name],
                         Position(
                             self.characters[creature.name].position.x + 1,
@@ -786,14 +788,14 @@ class Server(MastermindServerTCP):
                     )
                     self.localmaps[
                         creature.name
-                    ] = self.worldmap.get_chunks_near_position(
+                    ] = self.plane.get_chunks_near_position(
                         self.characters[creature.name].position
                     )
                     creature.command_queue.remove(
                         action
                     )  # remove the action after we process it.
                 if action.args[0] == "west":
-                    self.worldmap.bash(
+                    self.plane.bash(
                         self.characters[creature.name],
                         Position(
                             self.characters[creature.name].position.x - 1,
@@ -803,7 +805,7 @@ class Server(MastermindServerTCP):
                     )
                     self.localmaps[
                         creature.name
-                    ] = self.worldmap.get_chunks_near_position(
+                    ] = self.plane.get_chunks_near_position(
                         self.characters[creature.name].position
                     )
                     creature.command_queue.remove(
@@ -831,7 +833,7 @@ class Server(MastermindServerTCP):
                                 for (
                                     tile,
                                     distance,
-                                ) in self.worldmap.get_tiles_near_position(
+                                ) in self.plane.get_tiles_near_position(
                                     tile["position"], int(flag.split("_")[1])
                                 ):
                                     tile["lumens"] = tile["lumens"] + int(
@@ -851,11 +853,13 @@ class Server(MastermindServerTCP):
                                         for (
                                             tile,
                                             distance,
-                                        ) in self.worldmap.get_tiles_near_position(
-                                            tile["position"], int(flag.split("_")[1])
+                                        ) in self.plane.get_tiles_near_position(
+                                            tile["position"], int(
+                                                flag.split("_")[1])
                                         ):
                                             tile["lumens"] = tile["lumens"] + int(
-                                                int(flag.split("_")[1]) - distance
+                                                int(flag.split("_")
+                                                    [1]) - distance
                                             )
                                         break
         # we want a list that contains all the non-duplicate creatures on all localmaps around characters.
@@ -879,15 +883,15 @@ class Server(MastermindServerTCP):
 
     def generate_and_apply_city_layout(self, city_size):
         # city_size = 1
-        city_layout = self.worldmap.generate_city(city_size)
+        city_layout = self.plane.generate_city(city_size)
         # for every 1 city size it's 12 tiles across and high
         for j in range(city_size * 12):
             for i in range(city_size * 12):
                 if (
-                    server.worldmap.get_chunk_by_position(
+                    server.plane.get_chunk_by_position(
                         Position(
-                            i * server.worldmap.chunk_size + 1,
-                            j * server.worldmap.chunk_size + 1,
+                            i * server.plane.chunk_size + 1,
+                            j * server.plane.chunk_size + 1,
                             0,
                         )
                     ).was_loaded
@@ -898,11 +902,11 @@ class Server(MastermindServerTCP):
                             os.listdir("./data/json/mapgen/residential/")
                         )
 
-                        server.worldmap.build_json_building_at_position(
+                        server.plane.build_json_building_at_position(
                             "./data/json/mapgen/residential/" + json_file,
                             Position(
-                                i * server.worldmap.chunk_size + 1,
-                                j * server.worldmap.chunk_size + 1,
+                                i * server.plane.chunk_size + 1,
+                                j * server.plane.chunk_size + 1,
                                 0,
                             ),
                         )
@@ -910,11 +914,11 @@ class Server(MastermindServerTCP):
                         json_file = random.choice(
                             os.listdir("./data/json/mapgen/commercial/")
                         )
-                        server.worldmap.build_json_building_at_position(
+                        server.plane.build_json_building_at_position(
                             "./data/json/mapgen/commercial/" + json_file,
                             Position(
-                                i * server.worldmap.chunk_size + 1,
-                                j * server.worldmap.chunk_size + 1,
+                                i * server.plane.chunk_size + 1,
+                                j * server.plane.chunk_size + 1,
                                 0,
                             ),
                         )
@@ -922,11 +926,11 @@ class Server(MastermindServerTCP):
                         json_file = random.choice(
                             os.listdir("./data/json/mapgen/industrial/")
                         )
-                        server.worldmap.build_json_building_at_position(
+                        server.plane.build_json_building_at_position(
                             "./data/json/mapgen/industrial/" + json_file,
                             Position(
-                                i * server.worldmap.chunk_size + 1,
-                                j * server.worldmap.chunk_size + 1,
+                                i * server.plane.chunk_size + 1,
+                                j * server.plane.chunk_size + 1,
                                 0,
                             ),
                         )
@@ -975,11 +979,11 @@ class Server(MastermindServerTCP):
                                     json_file = (
                                         "./data/json/mapgen/road/city_road_v.json"
                                     )
-                            server.worldmap.build_json_building_at_position(
+                            server.plane.build_json_building_at_position(
                                 json_file,
                                 Position(
-                                    i * server.worldmap.chunk_size + 1,
-                                    j * server.worldmap.chunk_size + 1,
+                                    i * server.plane.chunk_size + 1,
+                                    j * server.plane.chunk_size + 1,
                                     0,
                                 ),
                             )
@@ -992,7 +996,8 @@ class Server(MastermindServerTCP):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Cataclysm LD Server")
-    parser.add_argument("--host", metavar="Host", help="Server host", default="0.0.0.0")
+    parser.add_argument("--host", metavar="Host",
+                        help="Server host", default="0.0.0.0")
     parser.add_argument(
         "--port", metavar="Port", type=int, help="Server port", default=6317
     )
@@ -1043,9 +1048,11 @@ if __name__ == "__main__":
             server.calendar.advance_time_by_x_seconds(
                 time_per_turn
             )  # a turn is one second.
-            server.compute_turn()  # where all queued creature actions get taken care of, as well as physics engine stuff.
+            # where all queued creature actions get taken care of, as well as physics engine stuff.
+            server.compute_turn()
             # print('turn: ' + str(server.calendar.get_turn()))
-            server.worldmap.update_chunks_on_disk()  # if the worldmap in memory changed update it on the hard drive.
+            # if the plane in memory changed update it on the hard drive.
+            server.plane.update_chunks_on_disk()
             # TODO: unload from memory chunks that have no updates required. (such as no monsters, Characters, or fires)
             last_turn_time = time.time()  # based off of system clock.
         except KeyboardInterrupt:
@@ -1053,7 +1060,8 @@ if __name__ == "__main__":
             server.accepting_disallow()
             server.disconnect_clients()
             server.disconnect()
-            server.worldmap.update_chunks_on_disk()  # if the worldmap in memory changed update it on the hard drive.
+            # if the plane in memory changed update it on the hard drive.
+            server.plane.update_chunks_on_disk()
             dont_break = False
             log.info("done cleaning up.")
         """except Exception as e:
@@ -1063,7 +1071,6 @@ if __name__ == "__main__":
             server.accepting_disallow()
             server.disconnect_clients()
             server.disconnect()
-            server.worldmap.update_chunks_on_disk() # if the worldmap in memory changed update it on the hard drive.
+            server.plane.update_chunks_on_disk() # if the plane in memory changed update it on the hard drive.
             dont_break = False
             sys.exit()"""
-

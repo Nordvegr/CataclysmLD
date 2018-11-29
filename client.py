@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+from src.worldmap import Plane
+from src.tileManager import TileManager
+from src.recipe import Recipe, RecipeManager
+from src.position import Position
+from src.item import Item, ItemManager
+from src.command import Command
+from src.blueprint import Blueprint
+from src.action import Action
+from Mastermind._mm_client import MastermindClientTCP
 import argparse
 import json
 import math
@@ -35,18 +44,6 @@ for folder in [
     pyglet.resource.path.append(folder)
     print("Loaded gfx folder", folder)
 pyglet.resource.reindex()
-
-from Mastermind._mm_client import MastermindClientTCP
-
-from src.action import Action
-from src.blueprint import Blueprint
-from src.command import Command
-from src.item import Item, ItemManager
-from src.character import Character
-from src.position import Position
-from src.recipe import Recipe, RecipeManager
-from src.tileManager import TileManager
-from src.worldmap import Worldmap
 
 
 class InputBox(glooey.Form):
@@ -319,14 +316,16 @@ class LoginWindow(glooey.containers.VBox):
 
         self.username = InputBox()
         self.password = InputBox()
-        self.username.push_handlers(on_unfocus=lambda w: print(f"username: '{w.text}'"))
+        self.username.push_handlers(
+            on_unfocus=lambda w: print(f"username: '{w.text}'"))
         self.password.push_handlers(
             on_unfocus=lambda w: print(f"password: ***************")
         )
 
         self.serverIP = InputBox()
         self.serverPort = InputBox()
-        self.serverIP.push_handlers(on_unfocus=lambda w: print(f"serverIP: '{w.text}'"))
+        self.serverIP.push_handlers(
+            on_unfocus=lambda w: print(f"serverIP: '{w.text}'"))
         self.serverPort.push_handlers(
             on_unfocus=lambda w: print(f"serverPort: '{w.text}'")
         )
@@ -424,6 +423,7 @@ class CharacterGenerationWindow(glooey.containers.VBox):
     custom_default_cell_size = 2
     # has 6 unchanging buttons on top which control which screen the player is on for genning
     # screens are 'scenario', 'profession', 'traits', 'stats', 'skills', 'description'
+
     def __init__(self):
         super().__init__()
 
@@ -435,7 +435,6 @@ class CharacterGenerationWindow(glooey.containers.VBox):
 
         # create a generic creature for the user to work from.
         self.character = Character()
-        
 
         _screens = [
             "scenario",
@@ -519,7 +518,8 @@ class mainWindow(glooey.containers.VBox):
         ):  # glooey uses x,y for grids from the top left.
             for j in range(self.chunk_size[1]):
                 self.map_grid.add(
-                    i, j, glooey.images.Image(pyglet.resource.texture("t_grass.png"))
+                    i, j, glooey.images.Image(
+                        pyglet.resource.texture("t_grass.png"))
                 )  # before we get an update we need to init the map with grass.
 
         bg = glooey.Background()
@@ -655,19 +655,22 @@ class mainWindow(glooey.containers.VBox):
                 # then overlay furniture on that.
                 if tile["furniture"] is not None:
                     self.map_grid[x, y].set_image(
-                        pyglet.resource.texture(tile["furniture"].ident + ".png")
+                        pyglet.resource.texture(
+                            tile["furniture"].ident + ".png")
                     )
 
                 # then overlay items on that.
                 if tile["items"] is not None and len(tile["items"]) > 0:
                     self.map_grid[x, y].set_image(
-                        pyglet.resource.texture(tile["items"][0].ident + ".png")
+                        pyglet.resource.texture(
+                            tile["items"][0].ident + ".png")
                     )  # just show the first item
 
                 # then overlay creatures on that.
                 if tile["creature"] is not None:
                     self.map_grid[x, y].set_image(
-                        pyglet.resource.texture(tile["creature"].tile_ident + ".png")
+                        pyglet.resource.texture(
+                            tile["creature"].tile_ident + ".png")
                     )
 
             print("FPS:", pyglet.clock.get_fps())
@@ -684,7 +687,7 @@ class mainWindow(glooey.containers.VBox):
         while y >= self.chunk_size[1] * 3:
             y = y - self.chunk_size[1] * 3
 
-        return Position(x, y, z)
+        return Position(x, y)
 
     def draw_view_at_position(self, draw_position):
         self.trim_localmap(draw_position)  # update field of view and lighting
@@ -775,7 +778,8 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
         self.window = pyglet.window.Window(854, 480)
 
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA,
+                              pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
 
         self.gui = glooey.Gui(self.window)
 
@@ -806,7 +810,8 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
         self.hotbars = []  # TODO: remake in pyglet.
 
         self.LoginWindow = LoginWindow()
-        self.LoginWindow.grid[6, 1].push_handlers(on_click=self.login)  # Connect Button
+        self.LoginWindow.grid[6, 1].push_handlers(
+            on_click=self.login)  # Connect Button
 
         self.gui.add(self.LoginWindow)
 
@@ -841,11 +846,13 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
                         top_left=pyglet.resource.texture("top_left.png"),
                         top_right=pyglet.resource.texture("top_right.png"),
                         bottom_left=pyglet.resource.texture("bottom_left.png"),
-                        bottom_right=pyglet.resource.texture("bottom_right.png"),
+                        bottom_right=pyglet.resource.texture(
+                            "bottom_right.png"),
                     )
 
                     self.gui.add(self.bg)
-                    self.CharacterSelectWindow = CharacterSelectWindow(next_update)
+                    self.CharacterSelectWindow = CharacterSelectWindow(
+                        next_update)
                     self.CharacterSelectWindow.create_button.push_handlers(
                         on_click=self.create_new_character
                     )
@@ -885,11 +892,13 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
                         top_left=pyglet.resource.texture("top_left.png"),
                         top_right=pyglet.resource.texture("top_right.png"),
                         bottom_left=pyglet.resource.texture("bottom_left.png"),
-                        bottom_right=pyglet.resource.texture("bottom_right.png"),
+                        bottom_right=pyglet.resource.texture(
+                            "bottom_right.png"),
                     )
 
                     self.gui.add(self.bg)
-                    self.CharacterSelectWindow = CharacterSelectWindow(next_update)
+                    self.CharacterSelectWindow = CharacterSelectWindow(
+                        next_update)
                     self.CharacterSelectWindow.create_button.push_handlers(
                         on_click=self.create_new_character
                     )
@@ -899,8 +908,6 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
             if next_update is not None:
                 print("--next_update in character_gen--")
                 print(type(next_update))
-
-   
 
     def create_new_character(self, dt):
         # switch to the character generation screen
@@ -925,7 +932,7 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
         )
         self.gui.add(self.CharacterGenerationWindow)
         self.state = "character_gen"
-    
+
     def send_completed_character(self, dt):
         # gather up all the character info from the chargen window and send it.
         _data = self.CharacterGenerationWindow.character.to_json()
@@ -936,11 +943,12 @@ class Client(MastermindClientTCP):  # extends MastermindClientTCP
         self.send(command)
         # go back to the charcterSelectWindow and update it with the new character and let them select it.
         self.state = "character_select"
-    
+
     def login(self, dt):
         # we'll do the below to login and recieve a list of characters.
         self.connect(
-            self.LoginWindow.serverIP.text, int(self.LoginWindow.serverPort.text)
+            self.LoginWindow.serverIP.text, int(
+                self.LoginWindow.serverPort.text)
         )
         command = Command(self.LoginWindow.username.text, "login", ["noargs"])
         self.send(command)
@@ -967,4 +975,3 @@ if __name__ == "__main__":
     client = Client()
 
     pyglet.app.event_loop.run()  # main event loop starts here.
-

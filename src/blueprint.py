@@ -4,7 +4,7 @@ from .furniture import Furniture
 from .terrain import Terrain
 
 
-class Blueprint(): # is a physical representation of a recipe while it's being built in the world. # once built it 'turns' into the type and fills the worldmap with it.
+class Blueprint(): # is a physical representation of a recipe while it's being built in the world. # once built it 'turns' into the type and fills the plane with it.
     def __init__(self, type_of, recipe):
         valid_types = ['Terrain', 'Furniture', 'Item']
         self.ident = 'Blueprint'
