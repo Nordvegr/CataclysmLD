@@ -69,9 +69,8 @@ class Server(MastermindServerTCP):
         explored = []
 
         while len(reachable) > 0:
-            position = random.choice(
-                reachable
-            )  # get a random reachable position #TODO: be a little more intelligent about picking the best reachable position.
+            # get a random reachable position #TODO: be a little more intelligent about picking the best reachable position.
+            position = random.choice(reachable)
 
             # If we just got to the goal node. return the path.
             if position == pos1:
@@ -631,7 +630,7 @@ class Server(MastermindServerTCP):
 
             # if we get here we can process a single action
             if action.action_type == "move":
-                actions_to_take = actions_to_take - 
+                actions_to_take = actions_to_take - 50
                 if action.args[0] == "south":
                     if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
@@ -728,9 +727,9 @@ class Server(MastermindServerTCP):
                     creature.command_queue.remove(
                         action
                     )  # remove the action after we process it.
-           
 
     # this function handles overseeing all creature movement, attacks, and interactions
+
     def compute_turn(self):
         # init a list for all our found lights around characters.
         for _, chunks in self.localmaps.items():
@@ -798,7 +797,6 @@ class Server(MastermindServerTCP):
                 self.process_creature_command_queue(creature)
 
         # now that we've processed what everything wants to do we can return.
-
 
 
 # do this if the server was started up directly.

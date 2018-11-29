@@ -52,7 +52,7 @@ class Chunk:
 class Plane:
     # let's make the plane map and fill it with chunks!
 
-    def __init__(self, name, PLANE_SIZE):  # size in chunks along one axis.
+    def __init__(self, name):  # size in chunks along one axis.
         self.name = name
         self._log = logging.getLogger(name)
         self.PLANE_SIZE = PLANE_SIZE
@@ -99,24 +99,23 @@ class Plane:
     def update_chunks_on_disk(self):
         for i in range(self.PLANE_SIZE):
             for j in range(self.PLANE_SIZE):
-                for k, chunk in self.PLANE[i][j].items():
-                    path = str(
-                        "./planes/default/"
-                        + str(i)
-                        + "_"
-                        + str(j)
-                        + ".chunk"
-                    )
-                    if os.path.isfile(path):
-                        if chunk.is_dirty:
-                            with open(path, "wb") as fp:
-                                self._log.debug(
-                                    "{}_{}.chunk is dirty. Saving changes to disk.".format(
-                                        i, j
-                                    )
+                path = str(
+                    "./planes/default/"
+                    + str(i)
+                    + "_"
+                    + str(j)
+                    + ".chunk"
+                )
+                if os.path.isfile(path):
+                    if chunk.is_dirty:
+                        with open(path, "wb") as fp:
+                            self._log.debug(
+                                "{}_{}.chunk is dirty. Saving changes to disk.".format(
+                                    i, j
                                 )
-                                self.PLANE[i][j].is_dirty = False
-                                pickle.dump(self.PLANE[i][j], fp)
+                            )
+                            self.PLANE[i][j].is_dirty = False
+                            pickle.dump(self.PLANE[i][j], fp)
 
     def get_chunk_by_position(self, position):
         tile = self.get_tile_by_position(
@@ -321,7 +320,7 @@ class Plane:
                     # print(char)
                     # print(terrain)
                     impassable = False
-                    t_position = Position(position.x + i, position.y + j, k)
+                    t_position = Position(position.x + i, position.y + j)
                     self.put_object_at_position(
                         Terrain(fill_terrain, impassable), t_position
                     )  # use fill_terrain if unrecognized.

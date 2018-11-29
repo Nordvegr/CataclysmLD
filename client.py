@@ -680,7 +680,6 @@ class mainWindow(glooey.containers.VBox):
         # and must return a position within that size.
         x = position.x
         y = position.y
-        z = position.z
 
         while x >= self.chunk_size[0] * 3:
             x = x - self.chunk_size[0] * 3
