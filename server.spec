@@ -9,7 +9,7 @@ a = Analysis(['server.py'],
                         ('.\\img\\','.\\img\\'),
                         ('.\\data\\','.\\data\\'),
                         ('.\\tilesets\\','.\\tilesets\\'),
-                        ('.\\worlds\\default\\delete.me','.\\worlds\\default\\'),
+                        ('.\\planes\\default\\delete.me','.\\planes\\default\\'),
              ],
              datas=[
                  ('.\\server.cfg', '.'),

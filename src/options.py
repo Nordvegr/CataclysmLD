@@ -357,7 +357,7 @@ class Options:
         self.OPTIONS['CORE_VERSION']['VALUE'] = False
         self.OPTIONS['CORE_VERSION']['TYPE'] = 'world_default'
         self.OPTIONS['CORE_VERSION']['HINT'] = self.translate_marker( 'Core version data' )
-        self.OPTIONS['CORE_VERSION']['HINTLONG'] = self.translate_marker( 'Controls what migrations are applied for legacy worlds' )
+        self.OPTIONS['CORE_VERSION']['HINTLONG'] = self.translate_marker( 'Controls what migrations are applied for legacy planes' )
 
         self.OPTIONS['DELETE_WORLD'] = {}
         self.OPTIONS['DELETE_WORLD']['VALUE'] = False

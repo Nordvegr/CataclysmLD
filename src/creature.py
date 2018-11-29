@@ -25,13 +25,9 @@ class Creature:
         # what each creature wants to do this turn and the upcoming turns. contains a list of Action(s) that are processed by the server.
         self.command_queue = list()
         self.gender = "male"
-        self.radiation = 0  # radiation level. hurts some helps others.
         
         # name is optional here. characters and most NPCs would have a name.
         self.name = None
-        
-        self.in_vehicle = None  # other wise have a reference to the vehicle it's in.
-        self.controlling_vehicle = None
         
         # what is this creature able to do?
         self.possible_actions = [
@@ -45,17 +41,10 @@ class Creature:
             "reload",
         ]
 
-        # actions per turn (per second). (moving 5 ft a second is average walking speed)
-        self.actions_per_turn = 1
+        # how much speed can this creature spend towards actions per turn?
+        self.speed_per_turn = 100
 
-        # how many turns until we can take an action. if this is greater then 0 subtract 1 per turn until 0. add to this per action.
-        self.next_action_available = 0
-
-        # set True for no_clip, does_no_damage, chase_creature
-        self.hallucination = False
-        self.tile_ident = "player_female"  # base ident for new creatures.
-        self.dodges_per_turn = 0
-        self.blocks_per_turn = 0
+        self.tile_ident = "starter_race"  # base ident for new creatures.
         self.move_mode = "walk"  # 'walk', 'run', 'sneak'
 
         # list of body parts this creature has. normal human has 2 arms, 2 hands, 2 legs, torso, head, and 2 feet. head and torso are both vital organs.

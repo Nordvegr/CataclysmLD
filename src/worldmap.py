@@ -21,15 +21,13 @@ from src.terrain import Terrain
 
 
 class Chunk:
-    def __init__(
-        self, x, y, chunk_size
-    ):  # x, y relate to it's position on the world map.
+    # x, y relate to it's position on the plane
+    def __init__(self, x, y, chunk_size):
         self.tiles = []
         self.weather = "WEATHER_NONE"  # weather is per chunk.
         self.overmap_tile = "open_air"  # the tile represented on the over map
-        self.is_dirty = (
-            True
-        )  # set this to true to have the changes updated on the disk, default is True so worldgen writes it to disk
+        # set this to true to have the changes updated on the disk, default is True so worldgen writes it to disk
+        self.is_dirty = (True)
         self.was_loaded = "no"
         # start = time.time()
         for i in range(chunk_size):  # 0-13
@@ -54,8 +52,9 @@ class Chunk:
 class Plane:
     # let's make the plane map and fill it with chunks!
 
-    def __init__(self, PLANE_SIZE):  # size in chunks along one axis.
-        self._log = logging.getLogger("plane")
+    def __init__(self, name, PLANE_SIZE):  # size in chunks along one axis.
+        self.name = name
+        self._log = logging.getLogger(name)
         self.PLANE_SIZE = PLANE_SIZE
         self.PLANE = defaultdict(dict)  # dict of dicts for chunks
         # size of the chunk, leave it hardcoded here. (0-12)
@@ -70,7 +69,7 @@ class Plane:
             for j in range(self.PLANE_SIZE):
                 self.PLANE[i][j] = dict()
                 path = str(
-                    "./worlds/default/"
+                    "./planes/default/"
                     + str(i)
                     + "_"
                     + str(j)
@@ -96,14 +95,13 @@ class Plane:
         self._log.debug("---------------------------------------------")
         self._log.debug("World generation took: {} seconds".format(duration))
 
-    def update_chunks_on_disk(
-        self
-    ):  # after our map in memory changes we need to update the chunk file on disk.
+    # after our map in memory changes we need to update the chunk file on disk.
+    def update_chunks_on_disk(self):
         for i in range(self.PLANE_SIZE):
             for j in range(self.PLANE_SIZE):
                 for k, chunk in self.PLANE[i][j].items():
                     path = str(
-                        "./worlds/default/"
+                        "./planes/default/"
                         + str(i)
                         + "_"
                         + str(j)
@@ -181,7 +179,7 @@ class Plane:
                 x_count, y_count, self.chunk_size
             )
             path = str(
-                "./worlds/default/"
+                "./planes/default/"
                 + str(x_count)
                 + "_"
                 + str(y_count)

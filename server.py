@@ -53,12 +53,13 @@ class Server(MastermindServerTCP):
         # self.options.save()
         # create this many chunks in x and y (z is always 1 (level 0) for genning the world. we will build off that for caverns and ant stuff and z level buildings.
         self.planes = dict()
-        self.planes['Main'] = Plane()
-        self.RecipeManager = RecipeManager()
-        self.ProfessionManager = ProfessionManager()
-        self.MonsterManager = MonsterManager()
-        self.ItemManager = self.plane.ItemManager
-        
+
+        # load the plane from the directory in the name.
+        _planes_list = ['Overworld', 'Gaea', 'Lythander', 'Mostrai',
+                        'Gnarg', 'Ruggilli', 'Valriel', 'Ixalovh', 'Devourers']
+        for plane in _planes_list:
+            self.planes[plane] = Plane(plane)
+
     def get_connections(self):
         return self._mm_connections
 
@@ -618,9 +619,7 @@ class Server(MastermindServerTCP):
 
     def process_creature_command_queue(self, creature):
         actions_to_take = creature.actions_per_turn
-        for action in creature.command_queue[
-            :
-        ]:  # iterate a copy so we can remove on the fly.
+        for action in creature.command_queue[:]:
             if actions_to_take == 0:
                 return  # this creature is out of action points.
 
@@ -632,21 +631,19 @@ class Server(MastermindServerTCP):
 
             # if we get here we can process a single action
             if action.action_type == "move":
-                actions_to_take = actions_to_take - 1  # moving costs 1 ap.
+                actions_to_take = actions_to_take - 
                 if action.args[0] == "south":
                     if self.plane.move_object_from_position_to_position(
                         self.characters[creature.name],
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y + 1,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y + 1
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y + 1,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y + 1
                         )
                     creature.command_queue.remove(
                         action
@@ -657,14 +654,12 @@ class Server(MastermindServerTCP):
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y - 1,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y - 1
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y - 1,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y - 1
                         )
                     creature.command_queue.remove(
                         action
@@ -675,14 +670,12 @@ class Server(MastermindServerTCP):
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x + 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x + 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y
                         )
                     creature.command_queue.remove(
                         action
@@ -693,14 +686,12 @@ class Server(MastermindServerTCP):
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x - 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x - 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
+                            self.characters[creature.name].position.y
                         )
                     creature.command_queue.remove(
                         action
@@ -711,14 +702,12 @@ class Server(MastermindServerTCP):
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z + 1,
+                            self.characters[creature.name].position.y
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z + 1,
+                            self.characters[creature.name].position.y
                         )
                     creature.command_queue.remove(
                         action
@@ -729,88 +718,17 @@ class Server(MastermindServerTCP):
                         self.characters[creature.name].position,
                         Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z - 1,
+                            self.characters[creature.name].position.y
                         ),
                     ):
                         self.characters[creature.name].position = Position(
                             self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z - 1,
+                            self.characters[creature.name].position.y
                         )
                     creature.command_queue.remove(
                         action
                     )  # remove the action after we process it.
-            elif action.action_type == "bash":
-                actions_to_take = actions_to_take - 1  # bashing costs 1 ap.
-                if action.args[0] == "south":
-                    self.plane.bash(
-                        self.characters[creature.name],
-                        Position(
-                            self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y + 1,
-                            self.characters[creature.name].position.z,
-                        ),
-                    )
-                    self.localmaps[
-                        creature.name
-                    ] = self.plane.get_chunks_near_position(
-                        self.characters[creature.name].position
-                    )
-                    creature.command_queue.remove(
-                        action
-                    )  # remove the action after we process it.
-                if action.args[0] == "north":
-                    self.plane.bash(
-                        self.characters[creature.name],
-                        Position(
-                            self.characters[creature.name].position.x,
-                            self.characters[creature.name].position.y - 1,
-                            self.characters[creature.name].position.z,
-                        ),
-                    )
-                    self.localmaps[
-                        creature.name
-                    ] = self.plane.get_chunks_near_position(
-                        self.characters[creature.name].position
-                    )
-                    creature.command_queue.remove(
-                        action
-                    )  # remove the action after we process it.
-                if action.args[0] == "east":
-                    self.plane.bash(
-                        self.characters[creature.name],
-                        Position(
-                            self.characters[creature.name].position.x + 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
-                        ),
-                    )
-                    self.localmaps[
-                        creature.name
-                    ] = self.plane.get_chunks_near_position(
-                        self.characters[creature.name].position
-                    )
-                    creature.command_queue.remove(
-                        action
-                    )  # remove the action after we process it.
-                if action.args[0] == "west":
-                    self.plane.bash(
-                        self.characters[creature.name],
-                        Position(
-                            self.characters[creature.name].position.x - 1,
-                            self.characters[creature.name].position.y,
-                            self.characters[creature.name].position.z,
-                        ),
-                    )
-                    self.localmaps[
-                        creature.name
-                    ] = self.plane.get_chunks_near_position(
-                        self.characters[creature.name].position
-                    )
-                    creature.command_queue.remove(
-                        action
-                    )  # remove the action after we process it.
+           
 
     # this function handles overseeing all creature movement, attacks, and interactions
     def compute_turn(self):
@@ -881,115 +799,6 @@ class Server(MastermindServerTCP):
 
         # now that we've processed what everything wants to do we can return.
 
-    def generate_and_apply_city_layout(self, city_size):
-        # city_size = 1
-        city_layout = self.plane.generate_city(city_size)
-        # for every 1 city size it's 12 tiles across and high
-        for j in range(city_size * 12):
-            for i in range(city_size * 12):
-                if (
-                    server.plane.get_chunk_by_position(
-                        Position(
-                            i * server.plane.chunk_size + 1,
-                            j * server.plane.chunk_size + 1,
-                            0,
-                        )
-                    ).was_loaded
-                    == "no"
-                ):
-                    if city_layout[i][j] == "r":
-                        json_file = random.choice(
-                            os.listdir("./data/json/mapgen/residential/")
-                        )
-
-                        server.plane.build_json_building_at_position(
-                            "./data/json/mapgen/residential/" + json_file,
-                            Position(
-                                i * server.plane.chunk_size + 1,
-                                j * server.plane.chunk_size + 1,
-                                0,
-                            ),
-                        )
-                    elif city_layout[i][j] == "c":
-                        json_file = random.choice(
-                            os.listdir("./data/json/mapgen/commercial/")
-                        )
-                        server.plane.build_json_building_at_position(
-                            "./data/json/mapgen/commercial/" + json_file,
-                            Position(
-                                i * server.plane.chunk_size + 1,
-                                j * server.plane.chunk_size + 1,
-                                0,
-                            ),
-                        )
-                    elif city_layout[i][j] == "i":
-                        json_file = random.choice(
-                            os.listdir("./data/json/mapgen/industrial/")
-                        )
-                        server.plane.build_json_building_at_position(
-                            "./data/json/mapgen/industrial/" + json_file,
-                            Position(
-                                i * server.plane.chunk_size + 1,
-                                j * server.plane.chunk_size + 1,
-                                0,
-                            ),
-                        )
-                    elif (
-                        city_layout[i][j] == "R"
-                    ):  # complex enough to choose the right rotation.
-                        attached_roads = 0
-                        try:
-                            if city_layout[int(i - 1)][int(j)] == "R":
-                                attached_roads = attached_roads + 1
-                            if city_layout[int(i + 1)][int(j)] == "R":
-                                attached_roads = attached_roads + 1
-                            if city_layout[int(i)][int(j - 1)] == "R":
-                                attached_roads = attached_roads + 1
-                            if city_layout[int(i)][int(j + 1)] == "R":
-                                attached_roads = attached_roads + 1
-                            if attached_roads == 4:
-                                json_file = (
-                                    "./data/json/mapgen/road/city_road_4_way.json"
-                                )
-                            elif (
-                                attached_roads == 3
-                            ):  # TODO: make sure the roads line up right.
-                                if city_layout[int(i + 1)][int(j)] != "R":
-                                    json_file = "./data/json/mapgen/road/city_road_3_way_s0.json"
-                                elif city_layout[int(i - 1)][int(j)] != "R":
-                                    json_file = "./data/json/mapgen/road/city_road_3_way_p0.json"
-                                elif city_layout[int(i)][int(j + 1)] != "R":
-                                    json_file = "./data/json/mapgen/road/city_road_3_way_d0.json"
-                                elif city_layout[int(i)][int(j - 1)] != "R":
-                                    json_file = "./data/json/mapgen/road/city_road_3_way_u0.json"
-                            elif attached_roads <= 2:
-                                if city_layout[int(i + 1)][int(j)] == "R":
-                                    json_file = (
-                                        "./data/json/mapgen/road/city_road_h.json"
-                                    )
-                                elif city_layout[int(i - 1)][int(j)] == "R":
-                                    json_file = (
-                                        "./data/json/mapgen/road/city_road_h.json"
-                                    )
-                                elif city_layout[int(i)][int(j + 1)] == "R":
-                                    json_file = (
-                                        "./data/json/mapgen/road/city_road_v.json"
-                                    )
-                                elif city_layout[int(i)][int(j - 1)] == "R":
-                                    json_file = (
-                                        "./data/json/mapgen/road/city_road_v.json"
-                                    )
-                            server.plane.build_json_building_at_position(
-                                json_file,
-                                Position(
-                                    i * server.plane.chunk_size + 1,
-                                    j * server.plane.chunk_size + 1,
-                                    0,
-                                ),
-                            )
-                        except:
-                            # TODO: fix this blatant hack to account for coordinates outside the city layout.
-                            pass
 
 
 # do this if the server was started up directly.
