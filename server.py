@@ -55,10 +55,11 @@ class Server(MastermindServerTCP):
         self.planes = dict()
 
         # load the plane from the directory in the name.
-        _planes_list = ['Overworld', 'Gaea', 'Lythander', 'Mostrai',
+        _planes_list = ['Gaea', 'Lythander', 'Mostrai',
                         'Gnarg', 'Ruggilli', 'Valriel', 'Ixalovh', 'Devourers']
+        self.planes['Overworld'] = Plane('Overworld')
         for plane in _planes_list:
-            self.planes[plane] = Plane(plane)
+            self.planes[plane] = Plane(plane, 5)
 
     def get_connections(self):
         return self._mm_connections

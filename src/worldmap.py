@@ -5,6 +5,7 @@ import pprint
 import random
 import time
 import logging
+import math
 from collections import defaultdict
 
 from src.blueprint import Blueprint
@@ -22,16 +23,16 @@ from src.terrain import Terrain
 
 class Chunk:
     # x, y relate to it's position on the plane
-    def __init__(self, x, y, chunk_size):
+    def __init__(self, x, y, chunk_size=25):
         self.tiles = []
         self.weather = "WEATHER_NONE"  # weather is per chunk.
-        self.overmap_tile = "open_air"  # the tile represented on the over map
+        self.tile = "open_air"  # the tile represented on the over map
         # set this to true to have the changes updated on the disk, default is True so worldgen writes it to disk
         self.is_dirty = (True)
         self.was_loaded = "no"
         # start = time.time()
-        for i in range(chunk_size):  # 0-13
-            for j in range(chunk_size):  # 0-13
+        for i in range(chunk_size):  # 0-25
+            for j in range(chunk_size):  # 0-25
                 chunkdict = {}
                 chunkdict["position"] = Position(
                     i + int(x * chunk_size), j + int(y * chunk_size))
@@ -52,41 +53,34 @@ class Chunk:
 class Plane:
     # let's make the plane map and fill it with chunks!
 
-    def __init__(self, name):  # size in chunks along one axis.
+    # size in chunks along one axis.
+    def __init__(self, name, total_chunks=900):
         self.name = name
-        self._log = logging.getLogger(name)
-        self.PLANE_SIZE = PLANE_SIZE
+        self.total_chunks = total_chunks
+        self.chunk_dist_xy = int(math.sqrt(total_chunks))
+        self._log = logging.getLogger("plane_" + str(name))
         self.PLANE = defaultdict(dict)  # dict of dicts for chunks
-        # size of the chunk, leave it hardcoded here. (0-12)
-        self.chunk_size = 13
-        self.FurnitureManager = FurnitureManager()
-        self.ItemManager = ItemManager()
         start = time.time()
         # TODO: only need to load the chunks where there are actual Characters present in memory after generation.
         self._log.debug("creating/loading plane chunks")
-        count = 0
-        for i in range(self.PLANE_SIZE):
-            for j in range(self.PLANE_SIZE):
-                self.PLANE[i][j] = dict()
+        for i in range(self.chunk_dist_xy):
+            for j in range(self.chunk_dist_xy):
                 path = str(
-                    "./planes/default/"
-                    + str(i)
-                    + "_"
-                    + str(j)
-                    + ".chunk"
-                )
-
-                # if the chunk already exists on disk just load it.
+                    "./planes/"
+                     + self.name
+                     + "/"
+                     + str(i)
+                     + "_"
+                     + str(j)
+                     + ".chunk"
+                    )
+                # load it.
                 if os.path.isfile(path):
                     with open(path, "rb") as fp:
                         self.PLANE[i][j] = pickle.load(fp)
                         self.PLANE[i][j].was_loaded = "yes"
-                    if count < self.PLANE_SIZE - 1:
-                        count = count + 1
-                    else:
-                        count = 0
                 else:
-                    self.PLANE[i][j] = Chunk(i, j, self.chunk_size)
+                    self.PLANE[i][j] = Chunk(i, j)
                     with open(path, "wb") as fp:
                         pickle.dump(self.PLANE[i][j], fp)
 
@@ -94,28 +88,6 @@ class Plane:
         duration = end - start
         self._log.debug("---------------------------------------------")
         self._log.debug("World generation took: {} seconds".format(duration))
-
-    # after our map in memory changes we need to update the chunk file on disk.
-    def update_chunks_on_disk(self):
-        for i in range(self.PLANE_SIZE):
-            for j in range(self.PLANE_SIZE):
-                path = str(
-                    "./planes/default/"
-                    + str(i)
-                    + "_"
-                    + str(j)
-                    + ".chunk"
-                )
-                if os.path.isfile(path):
-                    if chunk.is_dirty:
-                        with open(path, "wb") as fp:
-                            self._log.debug(
-                                "{}_{}.chunk is dirty. Saving changes to disk.".format(
-                                    i, j
-                                )
-                            )
-                            self.PLANE[i][j].is_dirty = False
-                            pickle.dump(self.PLANE[i][j], fp)
 
     def get_chunk_by_position(self, position):
         tile = self.get_tile_by_position(
@@ -491,109 +463,6 @@ class Plane:
                     (self.get_tile_by_position(Position(i, j)), distance)
                 )
         return ret_tiles
-
-    def generate_city(self, size):
-        size = int(size * 12)  # multiplier
-        # this function creates a overmap that can be translated to build json buildings.
-        # size is 1-10
-        city_layout = defaultdict(dict)
-        for j in range(size):
-            for i in range(size):
-                city_layout[i][j] = "."  # . is grass or nothing
-
-        # first place roads along the center lines of the city
-        for tile in range(size):
-            city_layout[int(size / 2)][tile] = "R"
-            city_layout[tile][int(size / 2)] = "R"
-
-        # figure out how many buildings of each we need to build
-        num_buildings = size * size  # size squared.
-        num_residential = int(
-            num_buildings / 2 * 0.34
-        )  # 34% percent of the total tiles are residential.
-        num_commercial = int(num_buildings / 2 * 0.22)
-        num_industrial = int(num_buildings / 2 * 0.22)
-
-        num_hospitals = int(size / 12)
-        num_police = int(size / 12)
-        num_firedept = int(size / 12)
-        num_jail = int(size / 12)
-
-        self._log.debug("num_residential: " + str(num_residential))
-        self._log.debug("num_commercial: " + str(num_commercial))
-        self._log.debug("num_industrial: " + str(num_industrial))
-        self._log.debug("num_hospitals: " + str(num_hospitals))
-        self._log.debug("num_police: " + str(num_police))
-        self._log.debug("num_firedept: " + str(num_firedept))
-        self._log.debug("num_jail: " + str(num_jail))
-
-        # put road every 4th tile with houses on either side.
-        for j in range(1, size - 1):
-            for i in range(
-                random.randrange(0, 2), size - int(random.randrange(0, 2))
-            ):  # draw horizontal lines.
-                if i == int(size / 2):
-                    continue  # don't overwrite the middle road.
-
-                if j % 2 == 0:
-                    city_layout[i][j] = "R"
-                else:
-                    if random.randrange(0, 10) == 0:
-                        # rarely build a road between roads.
-                        city_layout[i][j] = "R"
-                        continue
-                    city_layout[i][j] = "B"  # else build a building.
-
-                # if we have a building to build
-                if city_layout[i][j] == "B":
-                    if num_residential > 0:
-                        city_layout[i][j] = "r"
-                        num_residential = num_residential - 1
-                    elif num_commercial > 0:
-                        city_layout[i][j] = "c"
-                        num_commercial = num_commercial - 1
-                    elif num_industrial > 0:
-                        city_layout[i][j] = "i"
-                        num_industrial = num_industrial - 1
-                    elif num_hospitals > 0:
-                        city_layout[i][j] = "H"
-                        num_hospitals = num_hospitals - 1
-                    elif num_jail > 0:
-                        city_layout[i][j] = "J"
-                        num_jail = num_jail - 1
-                    elif num_police > 0:
-                        city_layout[i][j] = "P"
-                        num_police = num_police - 1
-                    elif num_firedept > 0:
-                        city_layout[i][j] = "F"
-                        num_firedept = num_firedept - 1
-
-        # if we haven't placed our city services we need to go back and add them.
-        while num_police > 0 or num_firedept > 0 or num_jail > 0 or num_hospitals > 0:
-            i = random.randrange(1, size - 1)
-            j = random.randrange(1, size - 1)
-
-            if city_layout[i][j] != "R":
-                if num_police > 0:
-                    city_layout[i][j] = "P"
-                    num_police = num_police - 1
-                elif num_firedept > 0:
-                    city_layout[i][j] = "F"
-                    num_firedept = num_firedept - 1
-                elif num_jail > 0:
-                    city_layout[i][j] = "J"
-                    num_jail = num_jail - 1
-                elif num_hospitals > 0:
-                    city_layout[i][j] = "H"
-                    num_hospitals = num_hospitals - 1
-
-        for j in range(size):
-            for i in range(size):
-                # print(str(city_layout[i][j]), end = '') # the visual feedback on the console.
-                pass
-            print()
-
-        return city_layout
 
     # we use this in pathfinding.
     def get_adjacent_positions_non_impassable(self, position):
