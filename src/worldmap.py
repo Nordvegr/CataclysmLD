@@ -18,33 +18,46 @@ from src.character import Character
 from src.position import Position
 from src.terrain import Terrain
 
-# weather = [WEATHER_CLEAR, WEATHER_RAIN, WEATHER_FOG, WEATHER_STORM, WEATHER_TORNADO]
+# weather_types = [clear, rain, fog, storm]
 
+class Exit:
+    def __init__(self, plane, position):
+        # the plane the exit is on.
+        self.plane = plane
+        # the position on the plane this leads to.
+        self.position = position
+        
 
 class Chunk:
     # x, y relate to it's position on the plane
     def __init__(self, x, y, chunk_size=25):
         self.tiles = []
         self.weather = "WEATHER_NONE"  # weather is per chunk.
-        self.tile = "open_air"  # the tile represented on the over map
+        self.bigmap_tile = "open_air"  # the tile represented on the players big map
         # set this to true to have the changes updated on the disk, default is True so worldgen writes it to disk
         self.is_dirty = (True)
-        self.was_loaded = "no"
         # start = time.time()
         for i in range(chunk_size):  # 0-25
             for j in range(chunk_size):  # 0-25
-                chunkdict = {}
-                chunkdict["position"] = Position(
+                tiledict = {}
+                tiledict["position"] = Position(
                     i + int(x * chunk_size), j + int(y * chunk_size))
                 # this position is on the plane. no position is ever repeated on a plane. each chunk tile gets its own position.
-                chunkdict["terrain"] = Terrain("t_dirt")  # make the earth
+                tiledict["terrain"] = Terrain("t_dirt")  # make the earth
                 # Creature() # one creature per tile
-                chunkdict["creature"] = None
-                chunkdict["items"] = []  # can be more then one item in a tile.
-                chunkdict["trap"] = None  # one per tile
+                tiledict["creature"] = None
+                tiledict["items"] = list()  # can be more then one item in a tile.
+                tiledict["trap"] = None  # one per tile
                 # used in lightmap calculations, use 1 for base so we never have total darkness.
-                chunkdict["lumens"] = (1)
-                self.tiles.append(chunkdict)
+                tiledict["lumens"] = 1
+                # exits lead to other planes or instances.
+                # create two-way exits by default.
+                # one exit per tile
+                tiledict["exit"] = None 
+                # flags are special things that the tile does.
+                # dict so we can pass kwargs
+                tiledict["flags"] = dict()
+                self.tiles.append(tiledict)
         # end = time.time()
         # duration = end - start
         # print('chunk generation took: ' + str(duration) + ' seconds.')
@@ -67,13 +80,13 @@ class Plane:
             for j in range(self.chunk_dist_xy):
                 path = str(
                     "./planes/"
-                     + self.name
-                     + "/"
-                     + str(i)
-                     + "_"
-                     + str(j)
-                     + ".chunk"
-                    )
+                    + self.name
+                    + "/"
+                    + str(i)
+                    + "_"
+                    + str(j)
+                    + ".chunk"
+                )
                 # load it.
                 if os.path.isfile(path):
                     with open(path, "rb") as fp:
