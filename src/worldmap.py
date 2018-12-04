@@ -43,7 +43,7 @@ class Chunk:
                 tiledict["position"] = Position(
                     i + int(x * chunk_size), j + int(y * chunk_size))
                 # this position is on the plane. no position is ever repeated on a plane. each chunk tile gets its own position.
-                tiledict["terrain"] = Terrain("t_dirt")  # make the earth
+                tiledict["terrain"] = Terrain("t_grass")  # make the earth
                 # Creature() # one creature per tile
                 tiledict["creature"] = None
                 tiledict["items"] = list()  # can be more then one item in a tile.

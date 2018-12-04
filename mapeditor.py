@@ -6,23 +6,16 @@ from src.recipe import Recipe, RecipeManager
 from src.position import Position
 from src.item import Item, ItemManager
 from src.command import Command
-from src.blueprint import Blueprint
-from src.action import Action
-from Mastermind._mm_client import MastermindClientTCP
-import argparse
 import json
 import math
 import os
 import sys
 import time
-from collections import defaultdict
 
 import pyglet
 import glooey
 from pyglet.window import key as KEY
 from pyglet import clock
-from src.passhash import hashPassword
-from src.character import Character
 
 # load all the resources we can use and index them.
 
@@ -31,6 +24,7 @@ for folder in [
     "tiles/grassland/bg",
     "tiles/grassland/fg",
     "tiles/grassland/objects",
+    "tiles/global",
     "tiles/items",
     "tiles/containers"
     "tiles/monsters",
@@ -49,6 +43,7 @@ for folder in [
     print("Loaded resource folder", folder)
 
 pyglet.resource.reindex()
+
 
 class CustomInputBox(glooey.Form):
     custom_alignment = "center"
@@ -70,10 +65,123 @@ class CustomInputBox(glooey.Form):
         custom_right = pyglet.resource.image("form_right.png")
 
 
+class MapEditorButton(glooey.Button):
+    class MyLabel(glooey.Label):
+        custom_color = "#babdb6"
+        custom_font_size = 14
+        custom_vert_padding = 16
+        custom_horz_padding = 8
+
+    Label = MyLabel
+    custom_alignment = 'center'
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+    class Over(glooey.Background):
+        custom_color = "#3465a4"
+
+    class Down(glooey.Background):
+        custom_color = "#729fcff"
+
+    def __init__(self, text, image=None):
+        super().__init__(text, image)
+
+class CreatureButton(glooey.Button):
+    class MyLabel(glooey.Label):
+        custom_color = "#babdb6"
+        custom_font_size = 14
+        custom_vert_padding = 40
+        custom_horz_padding = 16
+
+    Label = MyLabel
+    custom_alignment = 'center'
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+    class Over(glooey.Background):
+        custom_color = "#3465a4"
+
+    class Down(glooey.Background):
+        custom_color = "#729fcff"
+
+    def __init__(self, text, image=None):
+        super().__init__(text, image)
+
+class LumensButton(glooey.Button):
+    class MyLabel(glooey.Label):
+        custom_color = "#babdb6"
+        custom_font_size = 14
+        custom_vert_padding = 32
+        custom_horz_padding = 32
+
+    Label = MyLabel
+    custom_alignment = 'center'
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+    class Over(glooey.Background):
+        custom_color = "#3465a4"
+
+    class Down(glooey.Background):
+        custom_color = "#729fcff"
+
+    def __init__(self, text, image=None):
+        super().__init__(text, image)
+
+class Menu_Bar(glooey.HBox):
+    custom_alignment = 'top'
+    custom_top_padding = 16
+  
+
+    def __init__(self):
+        super().__init__()
+        # New, Open, Save, SaveAs, Editing: Foreground or Background
+        self.menu_new = MapEditorButton('New')
+        self.add(self.menu_new)
+
+        self.menu_open = MapEditorButton('Open')
+        self.add(self.menu_open)
+
+        self.menu_save = MapEditorButton('Save')
+        self.add(self.menu_save)
+
+        self.menu_saveAs = MapEditorButton('SaveAs')
+        self.add(self.menu_saveAs)
+
+        self.menu_editing = MapEditorButton('Editing: Foreground')
+        self.add(self.menu_editing)
+
 class CustomScrollBox(glooey.ScrollBox):
     # custom_alignment = 'center'
-    custom_size_hint = 300, 200
-    custom_height_hint = 200
+    custom_size_hint = 200, 200
+    # custom_height_hint = 200
 
     class Frame(glooey.Frame):
         class Decoration(glooey.Background):
@@ -124,15 +232,108 @@ class CustomScrollBox(glooey.ScrollBox):
                 custom_center = pyglet.resource.texture("grip_vert_down.png")
                 custom_bottom = pyglet.resource.image("grip_bottom_down.png")
 
+
+class MapEditorLabel(glooey.Button):
+    custom_alignment = "center"
+    
+    class MyLabel(glooey.Label):
+        custom_alignment = 'center'
+        custom_color = "#babdb6"
+        custom_font_size = 12
+        custom_padding = 4
+
+    Label = MyLabel
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture("form_center.png")
+        custom_left = pyglet.resource.image("form_left.png")
+        custom_right = pyglet.resource.image("form_right.png")
+
+    def __init__(self, text):
+        super().__init__(text=text)
+
+class Tile_Editing(glooey.Bin):
+    custom_alignment = 'bottom right'
+    custom_top_padding = 16
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+
+    def __init__(self):
+        super().__init__()
+        self.grid = glooey.Grid(0, 0, 0, 0)
+        self.grid.cell_alignment = 'right'
+         # create selected tile window
+        # - bg image, fg image
+        # - creature - None or One
+        # - items - empty list or list with items.
+        # - lumens - integer of brightness 0-15000 (15,000 is full daylight)
+        # - exit - None or Exit()
+        # - flags - dict of flag:value pairs.
+        bg_label = MapEditorLabel('Tile Background')
+        self.grid[0,0] = bg_label
+
+        self.bg_button = MapEditorButton('', pyglet.resource.image('blank.png'))
+        self.grid[0,1] = self.bg_button
+
+        fg_label = MapEditorLabel('Tile Foreground')
+        self.grid[1,0] = fg_label
+
+        self.fg_button = MapEditorButton('', pyglet.resource.image('blank.png'))
+        self.grid[1,1] = self.fg_button
+
+        creature_label = MapEditorLabel('Creature')
+        self.grid[2,0] = creature_label
+
+        self.creature_button = CreatureButton('', pyglet.resource.image('blank.png'))
+        self.grid[2,1] = self.creature_button
+
+        lumens_label = MapEditorLabel('Lumens')
+        self.grid[3,0] = lumens_label
+
+        self.lumens_button = LumensButton('', pyglet.resource.image('blank.png'))
+        self.grid[3,1] = self.lumens_button
+
+        exit_label = MapEditorLabel('Exit')
+        self.grid[4,0] = exit_label
+
+        self.exit_button = MapEditorButton('', pyglet.resource.image('blank.png'))
+        self.grid[4,1] = self.exit_button
+
+        items_label = MapEditorLabel('Items')
+        self.grid[5,0] = items_label
+
+        flags_label = MapEditorLabel('Flags')
+        self.grid[5,1] = flags_label
+
+        self.items_list = CustomScrollBox()
+        # add a button to add a item to this list.
+        self.grid[6,0] = self.items_list
+
+        self.flags_list = CustomScrollBox()
+        # add a button to add a item to this list.
+        self.grid[6,1] = self.flags_list
+
+        self.add(self.grid)
+
+
+
 class MapTile(glooey.Image):
+    # because they way they stack make height and width
     custom_height_hint = 16
     custom_width_hint = 32
 
-    # custom_alignment = 'fill'
-    # because they way they stack make height and width
-
-    def __init__(self, x, y):
-        super().__init__(pyglet.resource.image("t_grass.png"))
+    def __init__(self, x, y, image):
+        super().__init__(pyglet.resource.image(image))
         self.x = x
         self.y = y
 
@@ -143,40 +344,49 @@ class MapTile(glooey.Image):
                 return
             if(abs(y - self.get_rect().center_y) > 16):
                 return
-            # did we click a tile? then select it. if not ignore. 
+            # did we click a tile? then select it. if not ignore.
             print(self.x, self.y)
             self.get_parent().selected_tile = self
             print(self.get_parent().selected_tile)
 
-       
-        
-        
+
 # maps are loaded as planes
 # on load load the whole map directory.
 # move chunk postions with wasd
-class mainWindow(glooey.containers.Board):
+class mainWindow(glooey.containers.Stack):
     def __init__(self):
         super().__init__()
         self.selected_tile = None
+        self.selected_brush = None
         self.tile_half_width, self.tile_half_height = 32, 16
+        self.editing = 'foreground'
 
         self.chunk_size = (25, 25)  # the only tuple you'll see I swear.
 
         # chunk_size + tilemap size
-        self.map_grid = glooey.Board() # self.chunk_size[0], self.chunk_size[1], 32, 64)
+        # self.chunk_size[0], self.chunk_size[1], 32, 64)
+        self.bg_map_grid = glooey.Board()
+        # self.chunk_size[0], self.chunk_size[1], 32, 64)
+        self.fg_map_grid = glooey.Board()
 
         for i in range(self.chunk_size[0]):
             for j in range(self.chunk_size[1]):
                 # before update we need to init the map with grass.
                 # 0,0 = tile_half_width, tile_half_height
-                # 2,1 = 64, 16 
-                
-                x = 816 - self.tile_half_width + ((i * self.tile_half_width) - (j * self.tile_half_width))
-                y = 800 - self.tile_half_height - ((i * self.tile_half_height) + (j * self.tile_half_height))
+                # 2,1 = 64, 16
+
+                x = 808 - self.tile_half_width + \
+                    ((i * self.tile_half_width) - (j * self.tile_half_width))
+                y = 912 - self.tile_half_height - \
+                    ((i * self.tile_half_height) + (j * self.tile_half_height))
                 # print('trying',x,y)
-                mp = MapTile(i, j)
-               
-                self.map_grid.add(widget=mp, rect=glooey.Rect(x, y, 32, 16))
+                bg_mp = MapTile(i, j, 't_grass.png')
+                fg_mp = MapTile(i, j, 'blank.png') # can't be none so show transparent tile.
+
+                self.bg_map_grid.add(
+                    widget=bg_mp, rect=glooey.Rect(x, y, 32, 16))
+                self.fg_map_grid.add(
+                    widget=fg_mp, rect=glooey.Rect(x, y, 32, 16))
 
         bg = glooey.Background()
         bg.set_appearance(
@@ -191,28 +401,38 @@ class mainWindow(glooey.containers.Board):
             bottom_right=pyglet.resource.texture("bottom_right.png"),
         )
 
-        self.add(widget=bg,rect=glooey.Rect(0, 0, 1000, 1000))
-        self.add(widget=self.map_grid, rect=glooey.Rect(0, 0, 1600, 800))
+        # Ordered Groups
+        self.insert(bg, 0)
 
-        # create selected tile window 
-        # - type
-        # - creature - None or One
-        # - items - empty list or list with items.
-        # - lumens - integer of brightness 0-15000 (15,000 is full daylight)
-        # - exit - None or Exit()
-        # - flags - dict of flag:value pairs.
+        self.insert(self.bg_map_grid, 1)
+        self.insert(self.fg_map_grid, 2)
 
+        def toggle_editing(self):
+            if self.editing == 'foreground':
+                self.editing = 'background'
+                self.bg_map_grid.propagate_mouse_events = True
+                self.fg_map_grid.propagate_mouse_events = False
+            else:
+                self.editing == 'foreground'
+                self.bg_map_grid.propagate_mouse_events = False
+                self.fg_map_grid.propagate_mouse_events = True
+
+        # Menu Bar
+        # New, Open, Save, SaveAs, Editing: Foreground or Background
+        menu_bar = Menu_Bar()
+        self.insert(menu_bar, 3)
+
+        # create selected tile window
+        tile_editing = Tile_Editing()
+        self.insert(tile_editing, 3)
+        
         # create last used tiles window 2*64 wide 5*32 tall
         # list of 10 tiles in a 2x5 grid that gets updated when you select a tile_type
-        # when in paint mode
-    
-        
-        
 
 
 class MapEditor:  # extends MastermindClientTCP
     def __init__(self):
-        self.window = pyglet.window.Window(1616, 1000)
+        self.window = pyglet.window.Window(1900, 1000)
 
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA,
@@ -227,7 +447,6 @@ class MapEditor:  # extends MastermindClientTCP
 #   if we start a client directly
 #
 if __name__ == "__main__":
-     
 
     mapeditor = MapEditor()
 
