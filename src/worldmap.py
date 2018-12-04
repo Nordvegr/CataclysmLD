@@ -47,7 +47,6 @@ class Chunk:
                 # Creature() # one creature per tile
                 tiledict["creature"] = None
                 tiledict["items"] = list()  # can be more then one item in a tile.
-                tiledict["trap"] = None  # one per tile
                 # used in lightmap calculations, use 1 for base so we never have total darkness.
                 tiledict["lumens"] = 1
                 # exits lead to other planes or instances.
@@ -56,7 +55,8 @@ class Chunk:
                 tiledict["exit"] = None 
                 # flags are special things that the tile does.
                 # dict so we can pass kwargs
-                tiledict["flags"] = dict()
+                # traps now go in flags (trap:electric)
+                tiledict["flags"] = dict() 
                 self.tiles.append(tiledict)
         # end = time.time()
         # duration = end - start

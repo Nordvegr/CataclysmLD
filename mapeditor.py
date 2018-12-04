@@ -124,7 +124,7 @@ class CustomScrollBox(glooey.ScrollBox):
                 custom_center = pyglet.resource.texture("grip_vert_down.png")
                 custom_bottom = pyglet.resource.image("grip_bottom_down.png")
 
-class MapTile(glooey.Label):
+class MapTile(glooey.Image):
     custom_height_hint = 16
     custom_width_hint = 32
 
@@ -132,12 +132,17 @@ class MapTile(glooey.Label):
     # because they way they stack make height and width
 
     def __init__(self, x, y):
-        super().__init__(str(x) + '_' + str(y)) #pyglet.resource.image("t_grass.png"))
+        super().__init__(pyglet.resource.image("t_grass.png"))
         self.x = x
         self.y = y
 
         @self.event
         def on_mouse_release(x, y, button, modifiers):
+            # trim presses outside the trapezoidal area.
+            if(abs(x - self.get_rect().center_x) > 16):
+                return
+            if(abs(y - self.get_rect().center_y) > 16):
+                return
             # did we click a tile? then select it. if not ignore. 
             print(self.x, self.y)
             self.get_parent().selected_tile = self
@@ -166,12 +171,12 @@ class mainWindow(glooey.containers.Board):
                 # 0,0 = tile_half_width, tile_half_height
                 # 2,1 = 64, 16 
                 
-                x = 786 - self.tile_half_width + ((i * self.tile_half_width) - (j * self.tile_half_width))
-                y = 786 - self.tile_half_height - ((i * self.tile_half_height) + (j * self.tile_half_height))
+                x = 816 - self.tile_half_width + ((i * self.tile_half_width) - (j * self.tile_half_width))
+                y = 800 - self.tile_half_height - ((i * self.tile_half_height) + (j * self.tile_half_height))
                 # print('trying',x,y)
                 mp = MapTile(i, j)
                
-                self.map_grid.add(widget=mp,rect=glooey.Rect(x, y, 32, 16))
+                self.map_grid.add(widget=mp, rect=glooey.Rect(x, y, 32, 16))
 
         bg = glooey.Background()
         bg.set_appearance(
@@ -186,8 +191,20 @@ class mainWindow(glooey.containers.Board):
             bottom_right=pyglet.resource.texture("bottom_right.png"),
         )
 
-        self.add(widget=bg,rect=glooey.Rect(0, 0, 1800, 1000))
-        self.add(widget=self.map_grid,rect=glooey.Rect(0, 0, 1600, 800))
+        self.add(widget=bg,rect=glooey.Rect(0, 0, 1000, 1000))
+        self.add(widget=self.map_grid, rect=glooey.Rect(0, 0, 1600, 800))
+
+        # create selected tile window 
+        # - type
+        # - creature - None or One
+        # - items - empty list or list with items.
+        # - lumens - integer of brightness 0-15000 (15,000 is full daylight)
+        # - exit - None or Exit()
+        # - flags - dict of flag:value pairs.
+
+        # create last used tiles window 2*64 wide 5*32 tall
+        # list of 10 tiles in a 2x5 grid that gets updated when you select a tile_type
+        # when in paint mode
     
         
         
@@ -195,7 +212,7 @@ class mainWindow(glooey.containers.Board):
 
 class MapEditor:  # extends MastermindClientTCP
     def __init__(self):
-        self.window = pyglet.window.Window(1800, 1000)
+        self.window = pyglet.window.Window(1616, 1000)
 
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA,
