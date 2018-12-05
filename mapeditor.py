@@ -66,6 +66,7 @@ class CustomInputBox(glooey.Form):
 
 
 class MapEditorButton(glooey.Button):
+    custom_padding = 8
     class MyLabel(glooey.Label):
         custom_color = "#babdb6"
         custom_font_size = 14
@@ -104,6 +105,7 @@ class CreatureButton(glooey.Button):
 
     Label = MyLabel
     custom_alignment = 'center'
+    custom_padding = 8
 
     class Base(glooey.Background):
         custom_center = pyglet.resource.texture('center.png')
@@ -182,8 +184,9 @@ class CustomScrollBox(glooey.ScrollBox):
     # custom_alignment = 'center'
     custom_size_hint = 200, 200
     # custom_height_hint = 200
-
+    
     class Frame(glooey.Frame):
+        custom_padding = 8
         class Decoration(glooey.Background):
             custom_center = pyglet.resource.texture("scrollbox_center.png")
 
@@ -252,11 +255,11 @@ class MapEditorLabel(glooey.Button):
     def __init__(self, text):
         super().__init__(text=text)
 
-class Tile_Editing(glooey.Bin):
+class Tile_Editing(glooey.Frame):
     custom_alignment = 'bottom right'
-    custom_top_padding = 16
+    custom_vert_padding = 32
 
-    class Base(glooey.Background):
+    class Decoration(glooey.Background):
         custom_center = pyglet.resource.texture('center.png')
         custom_top = pyglet.resource.texture('top.png')
         custom_bottom = pyglet.resource.texture('bottom.png')
@@ -267,12 +270,11 @@ class Tile_Editing(glooey.Bin):
         custom_bottom_left = pyglet.resource.image('bottom_left.png')
         custom_bottom_right = pyglet.resource.image('bottom_right.png')
 
-
     def __init__(self):
         super().__init__()
         self.grid = glooey.Grid(0, 0, 0, 0)
         self.grid.cell_alignment = 'right'
-         # create selected tile window
+        # create selected tile window
         # - bg image, fg image
         # - creature - None or One
         # - items - empty list or list with items.
@@ -324,6 +326,7 @@ class Tile_Editing(glooey.Bin):
         self.grid[6,1] = self.flags_list
 
         self.add(self.grid)
+        
 
 
 
@@ -407,28 +410,33 @@ class mainWindow(glooey.containers.Stack):
         self.insert(self.bg_map_grid, 1)
         self.insert(self.fg_map_grid, 2)
 
-        def toggle_editing(self):
-            if self.editing == 'foreground':
-                self.editing = 'background'
-                self.bg_map_grid.propagate_mouse_events = True
-                self.fg_map_grid.propagate_mouse_events = False
-            else:
-                self.editing == 'foreground'
-                self.bg_map_grid.propagate_mouse_events = False
-                self.fg_map_grid.propagate_mouse_events = True
 
         # Menu Bar
         # New, Open, Save, SaveAs, Editing: Foreground or Background
-        menu_bar = Menu_Bar()
-        self.insert(menu_bar, 3)
+        self.menu_bar = Menu_Bar()
+        self.insert(self.menu_bar, 3)
 
         # create selected tile window
         tile_editing = Tile_Editing()
         self.insert(tile_editing, 3)
+
+        self.menu_bar.menu_editing.push_handlers(on_click=self.toggle_editing)
         
         # create last used tiles window 2*64 wide 5*32 tall
         # list of 10 tiles in a 2x5 grid that gets updated when you select a tile_type
 
+    def toggle_editing(self, editing):
+        print(editing)
+        if self.editing == 'foreground':
+            self.editing = 'background'
+            self.menu_bar.menu_editing.text = 'Editing: Background'
+            self.bg_map_grid.propagate_mouse_events = True
+            self.fg_map_grid.propagate_mouse_events = False
+        else:
+            self.editing = 'foreground'
+            self.menu_bar.menu_editing.text = 'Editing: Foreground'
+            self.bg_map_grid.propagate_mouse_events = False
+            self.fg_map_grid.propagate_mouse_events = True
 
 class MapEditor:  # extends MastermindClientTCP
     def __init__(self):
