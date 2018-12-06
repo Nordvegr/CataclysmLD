@@ -64,6 +64,36 @@ class CustomInputBox(glooey.Form):
         custom_left = pyglet.resource.image("form_left.png")
         custom_right = pyglet.resource.image("form_right.png")
 
+class PaletteButton(glooey.Button):
+    custom_padding = 8
+    class MyLabel(glooey.Label):
+        custom_color = "#babdb6"
+        custom_font_size = 10
+        custom_vert_padding = 8
+        custom_horz_padding = 8
+
+    Label = MyLabel
+    custom_alignment = 'center'
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+    class Over(glooey.Background):
+        custom_color = "#3465a4"
+
+    class Down(glooey.Background):
+        custom_color = "#729fcff"
+
+    def __init__(self, text, image=None):
+        super().__init__(text, image)
 
 class MapEditorButton(glooey.Button):
     custom_padding = 8
@@ -161,7 +191,6 @@ class Menu_Bar(glooey.HBox):
     custom_alignment = 'top'
     custom_top_padding = 16
   
-
     def __init__(self):
         super().__init__()
         # New, Open, Save, SaveAs, Editing: Foreground or Background
@@ -179,6 +208,23 @@ class Menu_Bar(glooey.HBox):
 
         self.menu_editing = MapEditorButton('Editing: Foreground')
         self.add(self.menu_editing)
+
+class Palette_Bar(glooey.HBox):
+    custom_alignment = 'bottom'
+  
+    def __init__(self):
+        super().__init__()
+        self.list_of_palette_buttons = list()
+        # 1 to 9 then 0 like a keyboard
+        for i in range(1, 10):
+            _button = PaletteButton(str(i), pyglet.resource.image('blank.png'))
+            self.list_of_palette_buttons.append(_button)
+        _button = PaletteButton(str(0), pyglet.resource.image('blank.png'))
+        self.list_of_palette_buttons.append(_button)
+        for button in self.list_of_palette_buttons:
+            self.add(button)
+
+        
 
 class CustomScrollBox(glooey.ScrollBox):
     # custom_alignment = 'center'
@@ -236,6 +282,36 @@ class CustomScrollBox(glooey.ScrollBox):
                 custom_bottom = pyglet.resource.image("grip_bottom_down.png")
 
 
+class ScrollBoxListButton(glooey.Button):
+    class MyLabel(glooey.Label):
+        custom_color = "#babdb6"
+        custom_font_size = 12
+        custom_alignment = 'center'
+
+    Label = MyLabel
+    custom_alignment = 'fill'
+    custom_height_hint = 12
+
+    class Base(glooey.Background):
+        custom_center = pyglet.resource.texture('center.png')
+        custom_top = pyglet.resource.texture('top.png')
+        custom_bottom = pyglet.resource.texture('bottom.png')
+        custom_left = pyglet.resource.texture('left.png')
+        custom_right = pyglet.resource.texture('right.png')
+        custom_top_left = pyglet.resource.image('top_left.png')
+        custom_top_right = pyglet.resource.image('top_right.png')
+        custom_bottom_left = pyglet.resource.image('bottom_left.png')
+        custom_bottom_right = pyglet.resource.image('bottom_right.png')
+
+    class Over(glooey.Background):
+        custom_color = "#204a87"
+
+    class Down(glooey.Background):
+        custom_color = "#729fcff"
+
+    def __init__(self, text):
+        super().__init__(text)
+
 class MapEditorLabel(glooey.Button):
     custom_alignment = "center"
     
@@ -258,17 +334,6 @@ class MapEditorLabel(glooey.Button):
 class Tile_Editing(glooey.Frame):
     custom_alignment = 'bottom right'
     custom_vert_padding = 32
-
-    class Decoration(glooey.Background):
-        custom_center = pyglet.resource.texture('center.png')
-        custom_top = pyglet.resource.texture('top.png')
-        custom_bottom = pyglet.resource.texture('bottom.png')
-        custom_left = pyglet.resource.texture('left.png')
-        custom_right = pyglet.resource.texture('right.png')
-        custom_top_left = pyglet.resource.image('top_left.png')
-        custom_top_right = pyglet.resource.image('top_right.png')
-        custom_bottom_left = pyglet.resource.image('bottom_left.png')
-        custom_bottom_right = pyglet.resource.image('bottom_right.png')
 
     def __init__(self):
         super().__init__()
@@ -318,10 +383,13 @@ class Tile_Editing(glooey.Frame):
         self.grid[5,1] = flags_label
 
         self.items_list = CustomScrollBox()
-        # add a button to add a item to this list.
+        _button = ScrollBoxListButton('Add')
+        self.items_list.add(_button)
         self.grid[6,0] = self.items_list
 
         self.flags_list = CustomScrollBox()
+        _button = ScrollBoxListButton('Add')
+        self.flags_list.add(_button)
         # add a button to add a item to this list.
         self.grid[6,1] = self.flags_list
 
@@ -356,6 +424,7 @@ class MapTile(glooey.Image):
 # maps are loaded as planes
 # on load load the whole map directory.
 # move chunk postions with wasd
+
 class mainWindow(glooey.containers.Stack):
     def __init__(self):
         super().__init__()
@@ -404,27 +473,34 @@ class mainWindow(glooey.containers.Stack):
             bottom_right=pyglet.resource.texture("bottom_right.png"),
         )
 
-        # Ordered Groups
+        # insert into an OrderedGroup
         self.insert(bg, 0)
 
         self.insert(self.bg_map_grid, 1)
         self.insert(self.fg_map_grid, 2)
+        # only propagate mouse events to the front or back depends on what's selected.
+        self.bg_map_grid.propagate_mouse_events = False
+        self.fg_map_grid.propagate_mouse_events = True
 
 
         # Menu Bar
         # New, Open, Save, SaveAs, Editing: Foreground or Background
         self.menu_bar = Menu_Bar()
         self.insert(self.menu_bar, 3)
+        self.menu_bar.menu_editing.push_handlers(on_click=self.toggle_editing)
 
         # create selected tile window
         tile_editing = Tile_Editing()
         self.insert(tile_editing, 3)
 
-        self.menu_bar.menu_editing.push_handlers(on_click=self.toggle_editing)
+        self.palette_bar = Palette_Bar()
+        self.insert(self.palette_bar, 3)
+
         
         # create last used tiles window 2*64 wide 5*32 tall
         # list of 10 tiles in a 2x5 grid that gets updated when you select a tile_type
 
+    # button handlers
     def toggle_editing(self, editing):
         print(editing)
         if self.editing == 'foreground':
@@ -437,10 +513,52 @@ class mainWindow(glooey.containers.Stack):
             self.menu_bar.menu_editing.text = 'Editing: Foreground'
             self.bg_map_grid.propagate_mouse_events = False
             self.fg_map_grid.propagate_mouse_events = True
+    
+    def click_menu_new(self, menu_new):
+        pass
+    
+    def click_menu_save(self, menu_save):
+        pass
 
-class MapEditor:  # extends MastermindClientTCP
+    def click_menu_SaveAs(self, menu_saveAs):
+        pass
+
+    def click_menu_open(self, menu_open):
+        pass
+
+
+    def click_palette_bar(self, palette_bar):
+        pass
+    
+
+    def click_tile_background(self, tile_background):
+        pass
+
+    def click_tile_foreground(self, tile_foreground):
+        pass
+    
+    def click_tile_creature(self, tile_creature):
+        pass
+    
+    def click_tile_lumens(self, tile_lumens):
+        pass
+    
+    def click_tile_exit(self, tile_exit):
+        pass
+    
+    def click_tile_items_listitem(self, tile_items_listitem):
+        pass
+    
+    def click_tile_flags_listitem(self, tile_flags_listitem):
+        pass
+
+         
+
+
+class MapEditor: 
     def __init__(self):
-        self.window = pyglet.window.Window(1900, 1000)
+        self.window = pyglet.window.Window(1916, 1010)
+        self.window.set_location(0, 32)
 
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA,
@@ -449,6 +567,7 @@ class MapEditor:  # extends MastermindClientTCP
         self.gui = glooey.Gui(self.window)
 
         self.gui.add(mainWindow())
+    
 
 
 #
