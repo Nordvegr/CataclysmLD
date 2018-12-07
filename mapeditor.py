@@ -64,8 +64,10 @@ class CustomInputBox(glooey.Form):
         custom_left = pyglet.resource.image("form_left.png")
         custom_right = pyglet.resource.image("form_right.png")
 
+
 class PaletteButton(glooey.Button):
     custom_padding = 8
+
     class MyLabel(glooey.Label):
         custom_color = "#babdb6"
         custom_font_size = 10
@@ -95,8 +97,10 @@ class PaletteButton(glooey.Button):
     def __init__(self, text, image=None):
         super().__init__(text, image)
 
+
 class MapEditorButton(glooey.Button):
     custom_padding = 8
+
     class MyLabel(glooey.Label):
         custom_color = "#babdb6"
         custom_font_size = 14
@@ -125,6 +129,7 @@ class MapEditorButton(glooey.Button):
 
     def __init__(self, text, image=None):
         super().__init__(text, image)
+
 
 class CreatureButton(glooey.Button):
     class MyLabel(glooey.Label):
@@ -157,6 +162,7 @@ class CreatureButton(glooey.Button):
     def __init__(self, text, image=None):
         super().__init__(text, image)
 
+
 class LumensButton(glooey.Button):
     class MyLabel(glooey.Label):
         custom_color = "#babdb6"
@@ -187,10 +193,11 @@ class LumensButton(glooey.Button):
     def __init__(self, text, image=None):
         super().__init__(text, image)
 
+
 class Menu_Bar(glooey.HBox):
     custom_alignment = 'top'
     custom_top_padding = 16
-  
+
     def __init__(self):
         super().__init__()
         # New, Open, Save, SaveAs, Editing: Foreground or Background
@@ -209,9 +216,10 @@ class Menu_Bar(glooey.HBox):
         self.menu_editing = MapEditorButton('Editing: Foreground')
         self.add(self.menu_editing)
 
+
 class Palette_Bar(glooey.HBox):
     custom_alignment = 'bottom'
-  
+
     def __init__(self):
         super().__init__()
         self.list_of_palette_buttons = list()
@@ -224,15 +232,15 @@ class Palette_Bar(glooey.HBox):
         for button in self.list_of_palette_buttons:
             self.add(button)
 
-        
 
 class CustomScrollBox(glooey.ScrollBox):
     # custom_alignment = 'center'
     custom_size_hint = 200, 200
     # custom_height_hint = 200
-    
+
     class Frame(glooey.Frame):
         custom_padding = 8
+
         class Decoration(glooey.Background):
             custom_center = pyglet.resource.texture("scrollbox_center.png")
 
@@ -312,9 +320,10 @@ class ScrollBoxListButton(glooey.Button):
     def __init__(self, text):
         super().__init__(text)
 
+
 class MapEditorLabel(glooey.Button):
     custom_alignment = "center"
-    
+
     class MyLabel(glooey.Label):
         custom_alignment = 'center'
         custom_color = "#babdb6"
@@ -330,6 +339,7 @@ class MapEditorLabel(glooey.Button):
 
     def __init__(self, text):
         super().__init__(text=text)
+
 
 class Tile_Editing(glooey.Frame):
     custom_alignment = 'bottom right'
@@ -347,55 +357,58 @@ class Tile_Editing(glooey.Frame):
         # - exit - None or Exit()
         # - flags - dict of flag:value pairs.
         bg_label = MapEditorLabel('Tile Background')
-        self.grid[0,0] = bg_label
+        self.grid[0, 0] = bg_label
 
-        self.bg_button = MapEditorButton('', pyglet.resource.image('blank.png'))
-        self.grid[0,1] = self.bg_button
+        self.bg_button = MapEditorButton(
+            '', pyglet.resource.image('blank.png'))
+        self.grid[0, 1] = self.bg_button
 
         fg_label = MapEditorLabel('Tile Foreground')
-        self.grid[1,0] = fg_label
+        self.grid[1, 0] = fg_label
 
-        self.fg_button = MapEditorButton('', pyglet.resource.image('blank.png'))
-        self.grid[1,1] = self.fg_button
+        self.fg_button = MapEditorButton(
+            '', pyglet.resource.image('blank.png'))
+        self.grid[1, 1] = self.fg_button
 
         creature_label = MapEditorLabel('Creature')
-        self.grid[2,0] = creature_label
+        self.grid[2, 0] = creature_label
 
-        self.creature_button = CreatureButton('', pyglet.resource.image('blank.png'))
-        self.grid[2,1] = self.creature_button
+        self.creature_button = CreatureButton(
+            '', pyglet.resource.image('blank.png'))
+        self.grid[2, 1] = self.creature_button
 
         lumens_label = MapEditorLabel('Lumens')
-        self.grid[3,0] = lumens_label
+        self.grid[3, 0] = lumens_label
 
-        self.lumens_button = LumensButton('', pyglet.resource.image('blank.png'))
-        self.grid[3,1] = self.lumens_button
+        self.lumens_button = LumensButton(
+            '', pyglet.resource.image('blank.png'))
+        self.grid[3, 1] = self.lumens_button
 
         exit_label = MapEditorLabel('Exit')
-        self.grid[4,0] = exit_label
+        self.grid[4, 0] = exit_label
 
-        self.exit_button = MapEditorButton('', pyglet.resource.image('blank.png'))
-        self.grid[4,1] = self.exit_button
+        self.exit_button = MapEditorButton(
+            '', pyglet.resource.image('blank.png'))
+        self.grid[4, 1] = self.exit_button
 
         items_label = MapEditorLabel('Items')
-        self.grid[5,0] = items_label
+        self.grid[5, 0] = items_label
 
         flags_label = MapEditorLabel('Flags')
-        self.grid[5,1] = flags_label
+        self.grid[5, 1] = flags_label
 
         self.items_list = CustomScrollBox()
         _button = ScrollBoxListButton('Add')
         self.items_list.add(_button)
-        self.grid[6,0] = self.items_list
+        self.grid[6, 0] = self.items_list
 
         self.flags_list = CustomScrollBox()
         _button = ScrollBoxListButton('Add')
         self.flags_list.add(_button)
         # add a button to add a item to this list.
-        self.grid[6,1] = self.flags_list
+        self.grid[6, 1] = self.flags_list
 
         self.add(self.grid)
-        
-
 
 
 class MapTile(glooey.Image):
@@ -432,6 +445,8 @@ class mainWindow(glooey.containers.Stack):
         self.selected_brush = None
         self.tile_half_width, self.tile_half_height = 32, 16
         self.editing = 'foreground'
+        # folder_name is the folder that all the map chunks get saved under.
+        self.folder_name = 'new'
 
         self.chunk_size = (25, 25)  # the only tuple you'll see I swear.
 
@@ -453,7 +468,8 @@ class mainWindow(glooey.containers.Stack):
                     ((i * self.tile_half_height) + (j * self.tile_half_height))
                 # print('trying',x,y)
                 bg_mp = MapTile(i, j, 't_grass.png')
-                fg_mp = MapTile(i, j, 'blank.png') # can't be none so show transparent tile.
+                # can't be none so show transparent tile.
+                fg_mp = MapTile(i, j, 'blank.png')
 
                 self.bg_map_grid.add(
                     widget=bg_mp, rect=glooey.Rect(x, y, 32, 16))
@@ -482,7 +498,6 @@ class mainWindow(glooey.containers.Stack):
         self.bg_map_grid.propagate_mouse_events = False
         self.fg_map_grid.propagate_mouse_events = True
 
-
         # Menu Bar
         # New, Open, Save, SaveAs, Editing: Foreground or Background
         self.menu_bar = Menu_Bar()
@@ -496,11 +511,11 @@ class mainWindow(glooey.containers.Stack):
         self.palette_bar = Palette_Bar()
         self.insert(self.palette_bar, 3)
 
-        
         # create last used tiles window 2*64 wide 5*32 tall
         # list of 10 tiles in a 2x5 grid that gets updated when you select a tile_type
 
     # button handlers
+
     def toggle_editing(self, editing):
         print(editing)
         if self.editing == 'foreground':
@@ -513,49 +528,62 @@ class mainWindow(glooey.containers.Stack):
             self.menu_bar.menu_editing.text = 'Editing: Foreground'
             self.bg_map_grid.propagate_mouse_events = False
             self.fg_map_grid.propagate_mouse_events = True
-    
+
+    # Menu Items
     def click_menu_new(self, menu_new):
-        pass
-    
-    def click_menu_save(self, menu_save):
+        # wipe out the bg and fg and reset to blank.
         pass
 
-    def click_menu_SaveAs(self, menu_saveAs):
+    def click_menu_save(self, menu_save):
+        # use the self.folder_name to save the current map
+        pass
+
+    def click_menu_saveAs(self, menu_saveAs):
+        # let the user select a new self.folder_name to save as
         pass
 
     def click_menu_open(self, menu_open):
+        # open a input box for the user to select a self.folder_name
         pass
 
-
-    def click_palette_bar(self, palette_bar):
+    # Palette bar button
+    def click_palette_bar_button(self, palette_bar):
+        # open a window to select a palette fg or bg or creature.
         pass
-    
 
+    # TileEditing()
     def click_tile_background(self, tile_background):
+        # open a new window to select a bg
         pass
 
     def click_tile_foreground(self, tile_foreground):
+        # open a new window to select a fg
         pass
-    
+
     def click_tile_creature(self, tile_creature):
+        # open a new window to select a creature
         pass
-    
+
     def click_tile_lumens(self, tile_lumens):
+        # open a new window to select lumen level
         pass
-    
+
     def click_tile_exit(self, tile_exit):
+        # open a new window to select a plane, chunk, x, and y
         pass
-    
+
     def click_tile_items_listitem(self, tile_items_listitem):
+        # if we click 'add' button open a new window to select an item to add and amount
+        # if we click a item we added edit it with option to delete.
         pass
-    
+
     def click_tile_flags_listitem(self, tile_flags_listitem):
+        # if we click 'add' button open a new window to select an flag to add and amount
+        # if we click a flag we added edit it with option to delete.
         pass
 
-         
 
-
-class MapEditor: 
+class MapEditor:
     def __init__(self):
         self.window = pyglet.window.Window(1916, 1010)
         self.window.set_location(0, 32)
@@ -567,7 +595,6 @@ class MapEditor:
         self.gui = glooey.Gui(self.window)
 
         self.gui.add(mainWindow())
-    
 
 
 #
