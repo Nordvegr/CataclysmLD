@@ -1,0 +1,38 @@
+{
+    "group": "small commercial",
+    "overmap_terrain": "commercial",
+    "fill_terrain": "t_floor",
+    "comment": "small arcade; TODO: Traps, loot, monsters, make it nice?",
+    "floors": {
+        "0": [
+	        "PPPPPPPPPPPPP",
+	        "PWWOOWDWOOWWP",
+		    "PWv w   c #WP",
+    		"PWv     c #WP",
+	    	"PWv w   c #WP",
+	    	"PWv w   c #WP",
+		    "PWv     c aWP",
+	    	"PWv w      WP",
+	    	"PWv w   WWWWP",
+	    	"PWv     W tWP",
+	    	"PWv w   D jWP",
+	    	"PWWWWWWWWWWWP",
+			"PPPPPPPPPPPPP"
+		]
+	},
+	"terrain": {
+        "D": "t_door_o",
+        "W": "t_wall",
+        "P": "t_sidewalk",
+		"O": "t_window"
+	},
+	"furniture": {
+	    "a": "f_trashcan",
+		"c": "f_counter",
+		"j": "f_sink",
+        "t": "f_toilet",
+		"v": "f_arcade_machine",
+		"w": "f_pinball_machine",
+		"#": "f_locker"
+	}
+}
