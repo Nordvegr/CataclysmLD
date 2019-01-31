@@ -7,30 +7,30 @@
         "0": [
 	        "PPPPPPPPPPPPP",
 	        "PWWOOWDWOOWWP",
-		    "PWv w   c #WP",
+		"PWv w   c #WP",
     		"PWv     c #WP",
 	    	"PWv w   c #WP",
 	    	"PWv w   c #WP",
-		    "PWv     c aWP",
+		"PWv     c aWP",
 	    	"PWv w      WP",
 	    	"PWv w   WWWWP",
 	    	"PWv     W tWP",
 	    	"PWv w   D jWP",
 	    	"PWWWWWWWWWWWP",
-			"PPPPPPPPPPPPP"
+		"PPPPPPPPPPPPP"
 		]
 	},
 	"terrain": {
         "D": "t_door_o",
         "W": "t_wall",
         "P": "t_sidewalk",
-		"O": "t_window"
+	"O": "t_window"
 	},
 	"furniture": {
-	    "a": "f_trashcan",
+		"a": "f_trashcan",
 		"c": "f_counter",
 		"j": "f_sink",
-        "t": "f_toilet",
+        	"t": "f_toilet",
 		"v": "f_arcade_machine",
 		"w": "f_pinball_machine",
 		"#": "f_locker"
